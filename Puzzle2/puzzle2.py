@@ -76,10 +76,10 @@ class Window(Gtk.Window):
         self.thread.start()
 
     def on_button_clicked(self, widget):
-        self.label.set_text("Please, login with your university card")
-        self.css_provider.load_from_data(self.blue)
         
-        if (self.thread_in_use == False):
+         if (self.thread_in_use == False):
+            self.label.set_text("Please, login with your university card")
+            self.css_provider.load_from_data(self.blue)
             self.thread = threading.Thread(target=self.write_uid)
             self.thread.start()
             self.thread_in_use = True
