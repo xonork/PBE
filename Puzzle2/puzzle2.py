@@ -10,6 +10,7 @@ class Window(Gtk.Window):
         
         #CREEM LA FINESTRA
         Gtk.Window.__init__(self, title="rfid_gtk.py")
+        self.set_position(Gtk.WindowPosition.CENTER)
         self.connect("destroy", Gtk.main_quit)
         self.set_border_width(10)
         
