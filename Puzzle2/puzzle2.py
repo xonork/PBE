@@ -66,7 +66,7 @@ class Window(Gtk.Window):
         self.screen = Gdk.Screen.get_default()
         self.context.add_provider_for_screen(self.screen, self.css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         
-        #CREEM UN BUTÓ I EL FIQUEM DINS LA CAIXA
+        #CREEM UN BOTÓ I EL FIQUEM DINS LA CAIXA
         self.button = Gtk.Button(label="Clear")
         self.button.connect("clicked", self.on_button_clicked)
         self.box.pack_start(self.button, True, True, 0)
@@ -81,7 +81,7 @@ class Window(Gtk.Window):
         self.thread_in_use = True
         self.thread.start()
 
-    #FUNCIÓ QUE ES CRIDADA QUAN PULSEM, LA QUAL FA QUE LA ETIQUETA TORNI AL SEU ESTAT INICIAL
+    #FUNCIÓ QUE ES CRIDADA QUAN PULSEM EL BOTÓ, LA QUAL FA QUE LA ETIQUETA TORNI AL SEU ESTAT INICIAL
     def on_button_clicked(self, widget):
         
          #AQUESTA FUNCIÓ NOMÉS ES POT UTILITZAR SI L'ETIQUETA ESTÀ EN L'ESTAT ON IMPRIMEIX EL UID
