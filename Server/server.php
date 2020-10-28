@@ -1,4 +1,6 @@
-$db_host = "localhost";
+<?php
+
+	$db_host = "localhost";
 	$db_nombre="pbe";
 	$db_usuario="root";
 	$db_contra="";
@@ -19,7 +21,12 @@ $db_host = "localhost";
 	$uid = $_GET["uid"];
 	//$query = $_GET["query"];
 
+
+
+	//$consulta = "SELECT NAME, APELLIDOS FROM DATOS WHERE UID =".$uid;
+
 	$consulta = "SELECT * FROM DATOS WHERE UID = " . $uid;
+
 
 	$resultados = mysqli_query($conexion, $consulta);
 
