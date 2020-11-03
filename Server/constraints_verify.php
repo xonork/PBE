@@ -10,7 +10,7 @@
 	 * constraints (o podem especificar una en
 	 * concret) existeixen en una taula  específica 
 	*/
-	class constrains_verify{
+	class constraints_verify{
 
 		public $conexion;
 		public $constr;
@@ -114,7 +114,7 @@
 
 	mysqli_set_charset($conexion, "utf8");
 
-	$constrain = new constrains_verify($conexion, $constr, $table);
+	$constrain = new constraints_verify($conexion, $constr, $table);
 	
 	if($constrain->verify()){
 		echo "bien";
