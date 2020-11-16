@@ -1,11 +1,14 @@
 <?php
 //************COMENTARIS***********
-// - S'ha d'aclarar com funciona l'ordre de timetables.
-// - S'ha d'implementar el tema de les constraints per URL que hi ha a l'enunciat?
-// - El numero d'iteracions de cada taula (camps) esta una mica chapuza pero no he trobat altra opcio:
-//		- count(*) pero retorna un objecte de tipus mysqli_result q no puc castejar a int per operar.
-//		- si ho faig am un i++ per iteracio surt un warning al server que molesta.
-// - el uid s'ha de passar desde python al url http://localhost/pbe/get.php?timetables?uid=34737834&day=Fri&ho...
+// OBSERVACIONS:
+// - el uid s'ha de passar desde python al url http://localhost/pbe/get.php?timetables?uid=34737834&day=Fri&ho... 
+// - limit ha d'anar despres de order by
+// A SOLUCIONAR:
+// - les funcions showinserver i printinserver es poden fer en una sola?
+// - les funcions del final del fitxer es poden serpar a un nou fitxer
+// - nombrar els fitxers amb noms coherents al seu contingut
+// - revisar la nomenclatura de les variables
+// - les funcions dayDetector, compDetector i compDayDetector, es podrien simplificar en una sola?
 //************COMENTARIS***********
 
 	//dades de la db
@@ -16,118 +19,53 @@
 
 	//connexio amb la db utilitzant el fitxer connectDB.php
 	require_once("connectDB.php");
-	$db = new db_connection($dbHost, $dbName, $dbUsr, $dbPassword, "utf8");
+	require_once("functions.php");
+	$db = new dbConnection($dbHost, $dbName, $dbUsr, $dbPassword, "utf8");
 	$connection = $db->connect();
-	$constr = NULL;
-	//agafem el url i separem les dades que ens interessen
+	$funct = new RegularFunctions;
+
+	//agafem el url i separem les dades que ens interessen (taula i vector de constraints)
+	//verifiquem que les dades son correctes amb funcions del fitxer constVeryfier.php
+	//require_once("constVeryfier.php");
 	$url= $_SERVER["REQUEST_URI"];
 	$aux = explode('?', $url);
-	$len_query = count($aux);
-	if($len_query > 1){
-		if($len_query > 1) $table = $aux[1];
-		require_once("constVeryfier.php");
-		$contsVeryfier = new constraints_verify($connection, $aux[2], $table);
-		if($len_query > 2 && $aux[2] != NULL) 
+	$lenQuery = count($aux);
+	$constr = NULL;
+	if($lenQuery > 1){
+		$table = $aux[1];
+		$contsVeryfier = new ConstraintsVerify($connection, $aux[2], $table);
+		if($lenQuery > 2 && $aux[2] != NULL) 
 			$constr = $contsVeryfier->verify();
 	}
 	else{
 		echo "Error en la introducció de la query";
 		exit();
 	}
-	
 
-	//per a cada query diferent es fa una busqueda a la db amb la sentencia sql pertinent que a mes ordena els registres de la manera que s'especifica a l'enunciat
+	//segons la taula que volguem mirar creem una query diferent a la bd i mostrem el seu resultat al servidor
 	switch($table){
 		case "timetables":
-			$i_max = 4;
-			$constr_str = $contsVeryfier->constrCreator($constr, $table);
-			$out = showInServer($connection, $constr_str, $i_max);
-			$parsed_out = dayParser($out);
-			foreach ($parsed_out as $value) {
-				echo $value;
-				echo "<br>";
-
-			}
+			$iMax = 4;
+			$funct->orderAndPrintTimetable($connection, $iMax, $constr, $table, $contsVeryfier);				
 			break;
+
 		case "tasks":
-			$i_max = 3;
-			$constr_str = $contsVeryfier->constrCreator($constr, $table);
-			$out = showInServer($connection, $constr_str, $i_max);
-			foreach ($out as $value) {
-				echo $value;
-				echo "<br>";
-			}
+			$iMax = 3;
+			$constrStr = $contsVeryfier->constrCreator($constr, $table);
+			$constrStr = $constrStr. " order by date";
+			$funct->printInServer($connection, $constrStr, $iMax);
 			break;
 		case "marks":
-			$i_max = 3;
-			$constr_str = $contsVeryfier->constrCreator($constr, $table);
-			$constr_str = $constr_str. " order by subject";
-			$out = showInServer($connection, $constr_str, $i_max);
-			foreach ($out as $value) {
-				echo $value;
-				echo "<br>";
-			}
+			$iMax = 3;
+			$constrStr = $contsVeryfier->constrCreator($constr, $table);
+			$constrStr = $constrStr. " order by subject";
+			$funct->printInServer($connection, $constrStr, $iMax);
 			break;		
 	}
 
-	//funcio que es crida quan es vol mostrar al servidor el resultat final de la busqueda 
-	function showInServer($connectDB, $consultDB, $fields){
-		$result = mysqli_query($connectDB, $consultDB);
-		$num_rows = mysqli_num_rows($result); 
-		$out = array_fill(0,$num_rows,"");
-		$j = 0;
-		while($row = mysqli_fetch_row($result)){
-		$i = 1;
-			while($i <= $fields){
-				$out[$j] = $out[$j].$row[$i]. ",";
-				$i ++;
-			}
-		$j++;
-		}
-		return $out;
-	}
 	//tanquem la conexio amb la db
 	mysqli_close($connection);
+
+	
 	//posteriorment python llegeix els valors que apareixen al servidor web
-
-	function dayParser($out){
-		$actualDate = date("w");;
-		
-		$days = ["Sun", "Mon", "Tue", "Wen", "Thu", "Fri", "Sat"];
-		$parsedDays = array(count($days));
-
-		for($i = 0; $i < count($days); $i++){
-			
-			$parsedDays[$i] = $days[($actualDate+$i)%count($days)];
-		
-		}
-
-		$j = 0;
-		$offset = 0;
-		$found = False;
-
-		while(($j < count($out) and !$found)){
-
-			$aux = explode(',', $out[$j]);
-			if($aux[0] == $parsedDays[0]){
-				$offset = $j;
-				$found = True;
-			}
-
-			$j++;
-
-
-		}
-
-		$parsed_out = array(count($out));
-		for($i = 0; $i < count($out); $i++){
-			$parsed_out[$i] = $out[($offset + $i)%count($out)];
-			
-		}	
-
-		return $parsed_out;
-
-
-
-	}
 ?>
