@@ -1,12 +1,9 @@
 <?php
 //************COMENTARIS***********
-// - He canviat el atribut $constr, ara es un string que despres es separa en vector de constraints en 
-//   la funcio verify(), per estalviar linies al main, a mes retorna directament el vector amb 
-//   les constraints.
-//  - tenim el problema dels AND i lilit als if de constrCreator()
+
 //************COMENTARIS***********
 
-	class constraints_verify{
+	class ConstraintsVerify{
 		//atributs de la classe
 		public $conexion;
 		public $constr;
@@ -22,7 +19,7 @@
 			$aux = explode('&', $this->constr);
 			for($i = 0; $i < count($aux); $i++){
 				//instancia a la funcio de la mateixa clase
-				if(!$this->verify_single_constr($aux[$i])){
+				if(!$this->verifySingleConstr($aux[$i])){
 					echo "Error en la verificacio de les constraints";
 					exit();
 				}
@@ -30,9 +27,9 @@
 			return $aux;
 		}	
 		//verifica una sola constraint
-		function verify_single_constr($single_constr){
+		function verifySingleConstr($singleConstr){
 			//vector incialitzat amb els noms de les containts (sense valor) de l'argument
-			$aux = explode('=', $single_constr);
+			$aux = explode('=', $singleConstr);
 			$aux2 = explode('[', $aux[0]);
 			if($aux2[0] != "limit"){
 				//sentencia sql on es busca a les columnes de la taula (atribut) si hi ha alguna on es pugui referir la constraint
@@ -49,10 +46,10 @@
 		//creador de constraints preparades per sentencia sql
 		function constrCreator($constr, $table){
 			if($constr != NULL){
-				$constr_str = "";
-				$limit_constr_str = $this->limitDetector($constr);
-				$limit = $limit_constr_str[0];
-				$constrSinLimit = $limit_constr_str[1];
+				$constrStr = "";
+				$limitConstrStr = $this->limitDetector($constr);
+				$limit = $limitConstrStr[0];
+				$constrSinLimit = $limitConstrStr[1];
 				$len = count($constrSinLimit);
 				for ($i=0; $i < $len; $i++) {
 					//afegir cometes simples als valors de les constraints
@@ -73,44 +70,44 @@
 								break;
 						}
 						$aux[1] = $aux[1]."'";
-						$constr_str = $constr_str. $aux2[0]. $aux[1];
+						$constrStr = $constrStr. $aux2[0]. $aux[1];
 						//afegim operadors logics entre les constrains
 						if($i < $len-1)
-							$constr_str = $constr_str. " AND ";
+							$constrStr = $constrStr. " AND ";
 						else
-							$constr_str = $constr_str;
+							$constrStr = $constrStr;
 				}
 				//afegim el limit si hi ha
 				if($limit != NULL)
-					$limit_str = "limit ". $limit;
+					$limitStr = " limit ". $limit;
 				else 
-					$limit_str = "";
+					$limitStr = "";
 				//sentencia sql final
-				$constr_str = "select * from ". $table. " where ". $constr_str. $limit_str;
+				$constrStr = "select * from ". $table. " where ". $constrStr. $limitStr;
 			}
 			else
-				$constr_str = "select * from ". $table;
+				$constrStr = "select * from ". $table;
 
-			return $constr_str;
+			return $constrStr;
 		}
 
 		//buscar si hi ha limit entre les constraints i si hi ha l'extreu i es guarda el valor
 		function limitDetector($constr){
-			$limit_constr_str[0]= "";
+			$limitConstrStr[0]= "";
 			$len = count($constr);
 			$j = 0;
 			for ($i=0; $i < $len; $i++) { 
 				$aux = explode('=', $constr[$i]);
 				if($aux[0] == "limit"){
-					$limit_constr_str[0] = $aux[1];
+					$limitConstrStr[0] = $aux[1];
 				}
 				else{
 					$constrSinLimit[$j] = $constr[$i];
 					$j++;
 				}
 			}
-			$limit_constr_str[1] = $constrSinLimit;
-			return $limit_constr_str;
+			$limitConstrStr[1] = $constrSinLimit;
+			return $limitConstrStr;
 		}
 	}
 ?>
