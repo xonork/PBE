@@ -50,40 +50,52 @@
 				$limitConstrStr = $this->limitDetector($constr);
 				$limit = $limitConstrStr[0];
 				$constrSinLimit = $limitConstrStr[1];
-				$len = count($constrSinLimit);
-				for ($i=0; $i < $len; $i++) {
-					//afegir cometes simples als valors de les constraints
-					$aux = explode('=', $constrSinLimit[$i]);
-						$aux2 = explode('[', $aux[0]);
-						if(count($aux2) > 1) $extra = $aux2[1];
-						else $extra = "";
-						//afegim comparadors de les constraints si cal
-						switch($extra){
-							case "gt]":
-								$aux2[0] = $aux2[0]. " >'";
-								break;
-							case "lt]":
-								$aux2[0] = $aux2[0]. " <'";
-								break;
-							default:
-								$aux2[0] = $aux2[0]."='";
-								break;
-						}
-						$aux[1] = $aux[1]."'";
-						$constrStr = $constrStr. $aux2[0]. $aux[1];
-						//afegim operadors logics entre les constrains
-						if($i < $len-1)
-							$constrStr = $constrStr. " AND ";
-						else
-							$constrStr = $constrStr;
+				if($constrSinLimit != NULL){
+					$len = count($constrSinLimit);
+					for ($i=0; $i < $len; $i++) {
+						//afegir cometes simples als valors de les constraints
+						$aux = explode('=', $constrSinLimit[$i]);
+							$aux2 = explode('[', $aux[0]);
+							if(count($aux2) > 1) $extra = $aux2[1];
+							else $extra = "";
+							//afegim comparadors de les constraints si cal
+							switch($extra){
+                                case "gt]":
+                                    $aux2[0] = $aux2[0]. " >'";
+                                    break;
+                                case "gte]":
+                                    $aux2[0] = $aux2[0]. " >='";
+                                    break;
+                                case "lt]":
+                                    $aux2[0] = $aux2[0]. " <'";
+                                    break;
+                                case "lte]":
+                                    $aux2[0] = $aux2[0]. " <='";
+                                    break;
+                                default:
+                                    $aux2[0] = $aux2[0]."='";
+                                    break;
+                            }
+							$aux[1] = $aux[1]."'";
+							$constrStr = $constrStr. $aux2[0]. $aux[1];
+							//afegim operadors logics entre les constrains
+							if($i < $len-1)
+								$constrStr = $constrStr. " AND ";
+							else
+								$constrStr = $constrStr;
+					}
 				}
+				
 				//afegim el limit si hi ha
 				if($limit != NULL)
 					$limitStr = " limit ". $limit;
 				else 
 					$limitStr = "";
 				//sentencia sql final
-				$constrStr = "select * from ". $table. " where ". $constrStr. $limitStr;
+				if($constrSinLimit != NULL)
+					$constrStr = "select * from ". $table. " where ". $constrStr. $limitStr;
+				else 
+					$constrStr = "select * from ". $table. $limitStr;
 			}
 			else
 				$constrStr = "select * from ". $table;
