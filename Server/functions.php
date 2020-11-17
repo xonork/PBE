@@ -1,11 +1,11 @@
 <?php
-
+//funcio que retorna un vector amb els resultats de la qurey a la bd 
 require_once("constVeryfier.php");
 
 	class RegularFunctions{
 
 
-    //funcio que retorna un vector amb els resultats de la qurey a la bd 
+
 		static function showInServer($connectDB, $consultDB, $fields){
 			$result = mysqli_query($connectDB, $consultDB);
 			$num_rows = mysqli_num_rows($result); 
@@ -53,9 +53,22 @@ require_once("constVeryfier.php");
 			return False;
 		}
 
+		static function hourDetector($constr){
+			
+			if($constr != NULL){
+				foreach ($constr as $value) {
+					$aux = explode("=", $value);
+					if($aux[0] == "hour")
+						return True;
+				}
+			}
+			return False;
+	    	
+	    }
+
 		//funcio que retorna el numero corresponent al dia que hi ha a la constraint day si existeix
 		static function dayDetector($constr){
-			$constrDay = 10; //valor que no correspon a cap dia, per tant no hi ha constraint day
+			
 			if($constr != NULL){
 				foreach ($constr as $value) {
 					$aux = explode("=", $value);
@@ -100,38 +113,59 @@ require_once("constVeryfier.php");
 		}
 
 		//funcio que mostra al server
-		static function printInServer($connection, $constr_str, $i_max){
-			$out = self::showInServer($connection, $constr_str, $i_max);
+		static function printInServer($connection, $constrStr, $i_max){
+			$out = self::showInServer($connection, $constrStr, $i_max);
 				foreach ($out as $value) {
 					echo $value. "<br>";
 				}
 		}
 
 		//funcio que realitza les querys per ordre de dia a partir de l'actual i aplica certes constraints
-		function orderAndPrintTimetable($connection, $i_max, $constr, $table, $contsVeryfier){
+		//fucnio que busca i retorna el valor de la constraint uid en un vector de constraints
+	    function searchUid($constr){
+	        $constrUid= "";
+	        if($constr != NULL){
+	            foreach ($constr as $value) {
+	                $aux = explode("=", $value);
+	                if($aux[0] == "uid")
+	                     $constrUid = $aux[1];
+
+	            }
+	        }
+	        return $constrUid;
+	    }
+
+
+
+
+		function orderAndPrintTimetable($connection, $i_max, $constr, $table, $contsVeryfier,$constrUid){
 			$constrDay = self::compDayDetector($constr);
 			$days = self::dayParser($constrDay);
-				if(($constr == NULL || self::compDetector($constr)) && (!(self::dayDetector($constr)) && self::compDetector($constr))){
+				if((!(self::dayDetector($constr)) && !(self::hourDetector($constr))) || self::compDetector($constr)){
 					for ($i=0; $i < count($days); $i++) {
 						if($i != 0){
 							$constr = NULL;
-							$constr[0] = "day=".$days[$i];
-							$constr_str = $contsVeryfier->constrCreator($constr, $table);
-							self::printInServer($connection, $constr_str, $i_max);
+							$constr[0] = "uid=".$constrUid;
+                        	$constr[1] = "day=".$days[$i];
+            				$constrStr = $contsVeryfier->constrCreator($constr, $table);
+							self::printInServer($connection, $constrStr, $i_max);
 						}
 						else{
 							if($constr != NULL)
 								array_push($constr,"day=".$days[$i]);
 							else
 								$constr[0] = "day=".$days[$i];
-							$constr_str = $contsVeryfier->constrCreator($constr, $table);
-							self::printInServer($connection, $constr_str, $i_max);
+								$constrStr = $contsVeryfier->constrCreator($constr, $table);
+								self::printInServer($connection, $constrStr, $i_max);
 						}
+						
 					}
+
 				}
 				else{
-					$constr_str = $contsVeryfier->constrCreator($constr, $table);
-					self::printInServer($connection, $constr_str, $i_max);
+					$constrStr = $contsVeryfier->constrCreator($constr, $table);
+					self::printInServer($connection, $constrStr, $i_max);
+					
 				}
 		}
 	}
