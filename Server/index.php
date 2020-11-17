@@ -37,16 +37,18 @@
 		if($lenQuery > 2 && $aux[2] != NULL) 
 			$constr = $contsVeryfier->verify();
 	}
+
 	else{
 		echo "Error en la introducció de la query";
 		exit();
 	}
+	$constrUid = $funct->searchUid($constr);
 
 	//segons la taula que volguem mirar creem una query diferent a la bd i mostrem el seu resultat al servidor
 	switch($table){
 		case "timetables":
 			$iMax = 4;
-			$funct->orderAndPrintTimetable($connection, $iMax, $constr, $table, $contsVeryfier);				
+			$funct->orderAndPrintTimetable($connection, $iMax, $constr, $table, $contsVeryfier,$constrUid);				
 			break;
 
 		case "tasks":
