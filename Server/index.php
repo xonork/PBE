@@ -48,20 +48,21 @@
 	switch($table){
 		case "timetables":
 			$iMax = 4;
-			$funct->orderAndPrintTimetable($connection, $iMax, $constr, $table, $contsVeryfier,$constrUid);				
+			$funct->orderAndPrintTimetable($connection, $iMax, $constr, $table, $contsVeryfier, $constrUid);				
 			break;
 
 		case "tasks":
 			$iMax = 3;
 			$constrStr = $contsVeryfier->constrCreator($constr, $table);
 			$constrStr = $constrStr. " order by date";
-			$funct->printInServer($connection, $constrStr, $iMax);
+			//$funct->printInServer($connection, $constrStr, $iMax);
+			$funct->showIt($connection, $constrStr, $iMax, $table, False);
 			break;
 		case "marks":
 			$iMax = 3;
 			$constrStr = $contsVeryfier->constrCreator($constr, $table);
 			$constrStr = $constrStr. " order by subject";
-			$funct->printInServer($connection, $constrStr, $iMax);
+			$funct->showIt($connection, $constrStr, $iMax, $table, False);
 			break;		
 	}
 
