@@ -2,13 +2,9 @@
 //************COMENTARIS***********
 // OBSERVACIONS:
 // - el uid s'ha de passar desde python al url http://localhost/pbe/get.php?timetables?uid=34737834&day=Fri&ho... 
-// - limit ha d'anar despres de order by
 // A SOLUCIONAR:
-// - les funcions showinserver i printinserver es poden fer en una sola?
-// - les funcions del final del fitxer es poden serpar a un nou fitxer
-// - nombrar els fitxers amb noms coherents al seu contingut
-// - revisar la nomenclatura de les variables
-// - les funcions dayDetector, compDetector i compDayDetector, es podrien simplificar en una sola?
+// - hi ha problemes quan les constraints son amb comparadors de dies/hores i limit.
+//- s'ha de revisar el verificador de constraints, perque amb el comparador de dies no funciona.
 //************COMENTARIS***********
 
 	//dades de la db
