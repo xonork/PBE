@@ -1,30 +1,70 @@
 <?php
-//funcio que retorna un vector amb els resultats de la qurey a la bd 
-require_once("constVeryfier.php");
+
+	require_once("constVeryfier.php");
+	//constants
+	define('MON', 1);
+	define('TUE', 2);
+	define('WED', 3);
+	define('THU', 4);
+	define('FRI', 5);
+	define('HOURCOMP', 6);
+	define('HOUR', 7);
+	define('DAY', 8);
 
 	class RegularFunctions{
 
 
-
-		static function showInServer($connectDB, $consultDB, $fields){
+		//funcio que retorna un vector amb els resultats de la qurey a la bd 
+		static function showInServer($connectDB, $consultDB, $fields, $table, $done){
+			$colsNames = self::namesOfColumns($connectDB, $consultDB, $fields, $table);
 			$result = mysqli_query($connectDB, $consultDB);
 			$num_rows = mysqli_num_rows($result); 
-			$out = array_fill(0,$num_rows,"");
+			$tableArray = [];
 			$j = 0;
 			while($row = mysqli_fetch_row($result)){
-				$i = 1;
-					while($i <= $fields){
-						$out[$j] = $out[$j].$row[$i]. ",";
-						$i ++;
-					}
-				$j++;
+				if(!$done){
+					$i = 0;
+					$uid = $row[$i];
+					$done = True;
+				}
+				else
+					$i = 1;
+				$arrayAux = [];
+				while($i <= $fields){
+					$arrayAux[$colsNames[$i]] = $row[$i];
+					//$aux = array($colsNames[$i] => $row[$i]);
+					//$aux = $colsNames[$i] .':'. $row[$i];
+					//var_dump($aux);
+					//$tableArray[$j] = [$colsNames[$i] => $row[$i]];
+					
+					$i ++;
+					$j ++;
+				}	
+				array_push($tableArray,$arrayAux);
 			}
-			return $out;
+			return $tableArray;
+		}
+
+		function namesOfColumns($connectDB, $consultDB, $fields, $table){
+			$colsNames = [];
+			$columnsQuery = "select COLUMN_NAME from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME = '". $table. "'";
+			$columns = mysqli_query($connectDB, $columnsQuery);
+			foreach ($columns as $value) {
+				foreach ($value as $v) {
+					array_push($colsNames, $v);
+				}
+			}
+			return $colsNames;
+		}
+
+		function showIt($connectDB, $consultDB, $fields, $table, $done){
+			$out = self::showInServer($connectDB, $consultDB, $fields, $table, False);
+			echo json_encode($out);
 		}
 
 		//funcio que retorna un vector de dies ordenats a partir de l'actual.
 		static function dayParser($constrDay){
-			if($constrDay == 10)
+			if ($constrDay == 0)
 				$actualDate = date("w");
 			else
 				$actualDate = $constrDay;
@@ -37,88 +77,46 @@ require_once("constVeryfier.php");
 			return $parsedDays;
 		}
 
-		//funcio que detecta si en un vector hi ha algun caracter comparador caracteristic de certes cosntraints
-		static function compDetector($constr){
-			if($constr != NULL){
-				foreach ($constr as $value) {
-					$aux = explode("=", $value);
-					foreach ($aux as $value2) {
-						$aux2 = explode("[", $value2);
-						if(count($aux2) > 1)
-							if($aux2[1] != NULL)
-					 			return True;
-					}
-				}
-			}
-			return False;
-		}
-
-		static function hourDetector($constr){
-			
+		function detector($constr){
 			if($constr != NULL){
 				foreach ($constr as $value) {
 					$aux = explode("=", $value);
 					if($aux[0] == "hour")
-						return True;
-				}
-			}
-			return False;
-	    	
-	    }
-
-		//funcio que retorna el numero corresponent al dia que hi ha a la constraint day si existeix
-		static function dayDetector($constr){
-			
-			if($constr != NULL){
-				foreach ($constr as $value) {
-					$aux = explode("=", $value);
-					if($aux[0] == "day")
-						return True;
-				}
-			}
-			return False;
-		}
-
-		//funcio que retorna el numero del dia a partir del que treballar si hi ha a les constraints
-		static function compDayDetector($constr){
-			$constrDay = 10;
-			if($constr != NULL){
-				foreach ($constr as $value) {
-					$aux = explode("=", $value);
-					foreach ($aux as $value2){
+						return HOUR;
+					else if($aux[0] == "day")
+						return DAY;
+					foreach ($aux as $value2) {
 						$aux2 = explode("[", $value2);
 						if((count($aux2) > 1) && ($aux2[0] == "day")){
 							switch($aux[1]){
 								case "Mon":
-									$constrDay = 1;
+									return MON;
 									break;
 								case "Tue":
-									$constrDay = 2;
+									return TUE;
 									break;
 								case "Wed":
-									$constrDay = 3;
+									return WED;
 									break;
 								case "Thu":
-									$constrDay = 4;
+									return THU;
 									break;
 								case "Fri":
-									$constrDay = 5;
+									return FRI;
 									break;
-							}	
+							}
+						}
+						if(count($aux2) > 1){
+							if($aux2[1] != NULL)
+					 			return HOURCOMP;
 						}
 					}
 				}
+			return 0;
 			}
-			return $constrDay;
 		}
-
-		//funcio que mostra al server
-		static function printInServer($connection, $constrStr, $i_max){
-			$out = self::showInServer($connection, $constrStr, $i_max);
-				foreach ($out as $value) {
-					echo $value. "<br>";
-				}
-		}
+		//funcio que detecta si en un vector hi ha algun caracter comparador caracteristic de certes cosntraints
+		
 
 		//funcio que realitza les querys per ordre de dia a partir de l'actual i aplica certes constraints
 		//fucnio que busca i retorna el valor de la constraint uid en un vector de constraints
@@ -138,38 +136,51 @@ require_once("constVeryfier.php");
 
 
 
-		function orderAndPrintTimetable($connection, $i_max, $constr, $table, $contsVeryfier,$constrUid){
-			$constrDay = self::compDayDetector($constr);
+		function orderAndPrintTimetable($connection, $i_max, $constr, $table, $contsVeryfier, $constrUid){
+			$timetableArray = [];
+			$jsonArray = [];
+			$constrDay = self::detector($constr);
 			$days = self::dayParser($constrDay);
-				if((!(self::dayDetector($constr)) && !(self::hourDetector($constr))) || self::compDetector($constr)){
-					for ($i=0; $i < count($days); $i++) {
-						if($i != 0){
-							$constr = NULL;
-							$constr[0] = "uid=".$constrUid;
-                        	$constr[1] = "day=".$days[$i];
-            				$constrStr = $contsVeryfier->constrCreator($constr, $table);
-							self::printInServer($connection, $constrStr, $i_max);
+			if(((self::detector($constr) != DAY) && (self::detector($constr) != HOUR)) || (self::detector($constr) <= HOURCOMP)){
+				for ($i=0; $i < count($days); $i++) {
+					if($i != 0){
+						$constr = NULL;
+						$constr[0] = "uid=".$constrUid;
+						$constr[1] = "day=".$days[$i];
+        				$constrStr = $contsVeryfier->constrCreator($constr, $table);
+						$aux = self::showInServer($connection, $constrStr, $i_max, $table, True);
+						foreach ($aux as $value) {
+							array_push($timetableArray,$value);
 						}
-						else{
-							if($constr != NULL)
-								array_push($constr,"day=".$days[$i]);
-							else
-								$constr[0] = "day=".$days[$i];
-								$constrStr = $contsVeryfier->constrCreator($constr, $table);
-								self::printInServer($connection, $constrStr, $i_max);
-						}
-						
 					}
-
-				}
-				else{
-					$constrStr = $contsVeryfier->constrCreator($constr, $table);
-					self::printInServer($connection, $constrStr, $i_max);
+					else{
+						if($constr != NULL){
+							array_push($constr,"day=".$days[$i]);
+						}
+						else
+						$constr[0] = "day=".$days[$i];
+						$constrStr = $contsVeryfier->constrCreator($constr, $table);
+						$aux = self::showInServer($connection, $constrStr, $i_max, $table, False);
+						foreach ($aux as $value) {
+							array_push($timetableArray,$value);
+						}		
+					}
 					
 				}
+
+			}
+			else{
+				$constrStr = $contsVeryfier->constrCreator($constr, $table);
+				$aux = self::showInServer($connection, $constrStr, $i_max, $table);
+				foreach ($aux as $value) {
+					array_push($timetableArray,$value);
+				}
+				
+			}
+			$jsonArray = array("uid" => $constrUid, $table => $timetableArray);
+			
+			echo "<br>".json_encode($jsonArray);
 		}
 	}
-
-
 
 ?>
