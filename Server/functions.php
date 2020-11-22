@@ -15,7 +15,7 @@
 
 
 		//funcio que retorna un vector amb els resultats de la qurey a la bd 
-		static function showInServer($connectDB, $consultDB, $fields, $table, $done){
+		static function showInServer($connectDB, $consultDB, $fields, $table){
 			$colsNames = self::namesOfColumns($connectDB, $consultDB, $fields, $table);
 			$result = mysqli_query($connectDB, $consultDB);
 			$num_rows = mysqli_num_rows($result); 
