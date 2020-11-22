@@ -10,7 +10,6 @@
 	define('HOURCOMP', 6);
 	define('HOUR', 7);
 	define('DAY', 8);
-	define('LIMIT', 9);
 
 	class RegularFunctions{
 
@@ -22,17 +21,24 @@
 			$num_rows = mysqli_num_rows($result); 
 			$tableArray = [];
 			$j = 0;
+
 			while($row = mysqli_fetch_row($result)){
-				if(!$done){
+				/*if(!$done){
 					$i = 0;
 					$uid = $row[$i];
 					$done = True;
-				}
-				else
-					$i = 1;
+				}*/
+				
+					$i = 0;
 				$arrayAux = [];
 				while($i <= $fields){
+					if($colsNames[$i] != "uid")
 					$arrayAux[$colsNames[$i]] = $row[$i];
+					//$aux = array($colsNames[$i] => $row[$i]);
+					//$aux = $colsNames[$i] .':'. $row[$i];
+					//var_dump($aux);
+					//$tableArray[$j] = [$colsNames[$i] => $row[$i]];
+					
 					$i ++;
 					$j ++;
 				}	
@@ -53,9 +59,9 @@
 			return $colsNames;
 		}
 
-		function showIt($connectDB, $consultDB, $fields, $table, $done){
+		function showIt($connectDB, $consultDB, $fields, $table, $done,$constrUid){
 			$out = self::showInServer($connectDB, $consultDB, $fields, $table, False);
-			echo json_encode($out);
+			echo json_encode(array("uid"=>$constrUid, $table=>$out));
 		}
 
 		//funcio que retorna un vector de dies ordenats a partir de l'actual.
@@ -81,8 +87,6 @@
 						return HOUR;
 					else if($aux[0] == "day")
 						return DAY;
-					else if($aux[0] == "limit")
-						return LIMIT;
 					foreach ($aux as $value2) {
 						$aux2 = explode("[", $value2);
 						if((count($aux2) > 1) && ($aux2[0] == "day")){
@@ -113,7 +117,10 @@
 			return 0;
 			}
 		}
+		//funcio que detecta si en un vector hi ha algun caracter comparador caracteristic de certes cosntraints
+		
 
+		//funcio que realitza les querys per ordre de dia a partir de l'actual i aplica certes constraints
 		//fucnio que busca i retorna el valor de la constraint uid en un vector de constraints
 	    function searchUid($constr){
 	        $constrUid= "";
@@ -128,12 +135,15 @@
 	        return $constrUid;
 	    }
 
+
+
+
 		function orderAndPrintTimetable($connection, $i_max, $constr, $table, $contsVeryfier, $constrUid){
 			$timetableArray = [];
 			$jsonArray = [];
 			$constrDay = self::detector($constr);
 			$days = self::dayParser($constrDay);
-			if((((self::detector($constr) != DAY) && (self::detector($constr) != HOUR)) || (self::detector($constr) <= HOURCOMP)) && (self::detector($constr) != LIMIT)) {
+			if(((self::detector($constr) != DAY) && (self::detector($constr) != HOUR)) || (self::detector($constr) <= HOURCOMP)){
 				for ($i=0; $i < count($days); $i++) {
 					if($i != 0){
 						$constr = NULL;
@@ -157,18 +167,21 @@
 							array_push($timetableArray,$value);
 						}		
 					}
-					//echo $constrStr;	
+					
 				}
+
 			}
 			else{
 				$constrStr = $contsVeryfier->constrCreator($constr, $table);
-				$aux = self::showInServer($connection, $constrStr, $i_max, $table, False);
+				$aux = self::showInServer($connection, $constrStr, $i_max, $table);
 				foreach ($aux as $value) {
 					array_push($timetableArray,$value);
-				}	
+				}
+				
 			}
 			$jsonArray = array("uid" => $constrUid, $table => $timetableArray);
-			echo json_encode($jsonArray);
+			
+			echo "<br>".json_encode($jsonArray);
 		}
 	}
 
