@@ -29,9 +29,9 @@
 					$done = True;
 				}*/
 				
-					$i = 0;
+				$i = 0;
 				$arrayAux = [];
-				while($i <= $fields){
+				while($i < $fields){
 					if($colsNames[$i] != "uid")
 					$arrayAux[$colsNames[$i]] = $row[$i];
 					//$aux = array($colsNames[$i] => $row[$i]);
@@ -53,13 +53,15 @@
 			$columns = mysqli_query($connectDB, $columnsQuery);
 			foreach ($columns as $value) {
 				foreach ($value as $v) {
+
 					array_push($colsNames, $v);
 				}
 			}
+
 			return $colsNames;
 		}
 
-		function showIt($connectDB, $consultDB, $fields, $table, $done,$constrUid){
+		function showIt($connectDB, $consultDB, $fields, $table,$constrUid){
 			$out = self::showInServer($connectDB, $consultDB, $fields, $table, False);
 			echo json_encode(array("uid"=>$constrUid, $table=>$out));
 		}
@@ -181,7 +183,7 @@
 			}
 			$jsonArray = array("uid" => $constrUid, $table => $timetableArray);
 			
-			echo "<br>".json_encode($jsonArray);
+			echo json_encode($jsonArray);
 		}
 	}
 

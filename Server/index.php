@@ -56,13 +56,13 @@
 			$constrStr = $contsVeryfier->constrCreator($constr, $table);
 			$constrStr = $constrStr. " order by date";
 			//$funct->printInServer($connection, $constrStr, $iMax);
-			$funct->showIt($connection, $constrStr, $iMax, $table, False,$constrUid);
+			$funct->showIt($connection, $constrStr, $iMax, $table,$constrUid);
 			break;
 		case "marks":
 			$iMax = 3;
 			$constrStr = $contsVeryfier->constrCreator($constr, $table);
 			$constrStr = $constrStr. " order by subject";
-			$funct->showIt($connection, $constrStr, $iMax, $table, False,$constrUid);
+			$funct->showIt($connection, $constrStr, $iMax, $table,$constrUid);
 			break;		
 	}
 
