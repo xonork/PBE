@@ -18,12 +18,12 @@
 
 	if($fila=mysqli_fetch_row($results)){
 
-    echo $fila[0];	
+    echo json_encode(array("name"=>$fila[0]));	
 	
 	}
 
 	else{
-		echo "ERROR";
+		echo json_encode((array("name"=>"ERROR")));
 	}
 
 	
