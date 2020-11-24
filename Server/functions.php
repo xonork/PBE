@@ -31,7 +31,7 @@
 				
 				$i = 0;
 				$arrayAux = [];
-				while($i < $fields){
+				while($i <= $fields){
 					if($colsNames[$i] != "uid")
 					$arrayAux[$colsNames[$i]] = $row[$i];
 					//$aux = array($colsNames[$i] => $row[$i]);
