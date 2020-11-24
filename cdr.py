@@ -10,6 +10,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from gi.repository import Gdk
 from threading import Timer
+from read import Rfid_PN532
 #from adri import Rfid
 #from pirc522 import RFID
 import RPi.GPIO as GPIO
@@ -36,76 +37,18 @@ class Window(Gtk.Window):
 
         
 
-        '''
-        #define blue style
-        self.blue = b""" 
-                    box {
-                        margin: 0px;
-                    }
-                    
-                    button{
-                        background-color: #E0D4D4;
-                        box-shadow:#00000 5px 5px 1px;
-                        margin: 20px 10px 10px 10px;
-                    }
-                
-                    #label{
-                      background-color: #3393FF;
-                      font: bold 24px Verdana;
-                      border-radius:20px;
-                      color:#FFFFFF;
-                      padding: 50px;
-                      margin: 20px;
-                    }
-
-
-                """
         
-        #define red style    
-        self.red = b"""
-                    box {
-                        margin: 50px;
-                    }
-                    
-                    button{
-                        background-color: #E0D4D4;
-                        box-shadow:#00000 5px 5px 1px;
-                        margin: 20px 10px 10px 10px;
-                        }
-                    #label{
-                      background-color: #FA0000;
-                      font: bold 24px Verdana;
-                      border-radius:20px;
-                      color:#FFFFFF;
-                      margin: 10px 20px 20px 20px;
-                    }
-                    
-                """
     
         self.css_provider = Gtk.CssProvider() #Adding styles
-        self.css_provider.load_from_data(self.blue) 
+        self.css_provider.load_from_path("estilos.css") 
         self.context = Gtk.StyleContext()
         self.screen = Gdk.Screen.get_default()
         self.context.add_provider_for_screen(self.screen, self.css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-'''
-        '''#Thread per el lector de targetes
-        self.thread_uid = threading.Thread(target=self.log_in)  
-        self.thread_uid.daemon = True
-        self.thread_uid_in_use = True
-        self.thread_uid.start()'''
 
         
-    """def on_button_clicked(self, widget):  #function when "clear" button is clicked
-         if (self.thread_uid_in_use == False):
-            
-            self.label.set_text("Please, login with your university card")
-            self.css_provider.load_from_data(self.blue)
-            self.thread_uid = threading.Thread(target=self.uid)
-            self.thread_uid.start()
-            self.thread_uid_in_use = True"""
     
         
-    	
+    
         
     #Generem la funció del timer.
     def restart_timer(self):
@@ -144,9 +87,8 @@ class Window(Gtk.Window):
         #display.lcd_display_string('your university card', 3)
 
         self.pantalla1.show_all()
-        print('Pantalla')
-        #self.log_in()
-        #threading.Thread(target=self.log_in, daemon=True)
+        
+        
         
         
     
@@ -154,10 +96,14 @@ class Window(Gtk.Window):
 #Funcions associades a la pantalla de log in:
 
     def read_uid(self):
-        #rf = RFID()
-        #uid = Rfid.read_uid(self.rf)
-        self.uid = "890C769C"
-        threading.Thread(target=self.log_in, args=(self.uid,), daemon = True).start()
+            
+        rf = Rfid_PN532()
+        uid = rf.read_uid()
+        print(uid);
+        if(uid=="CBAC3D96"):
+            uid = "890C769C"
+        #uid = "890C769C"
+        threading.Thread(target=self.log_in, args=(uid,), daemon = True).start()
         
     #Funcio login
     #Si reconeix el uid passa a la pantalla 2 si no dona error   
@@ -166,17 +112,22 @@ class Window(Gtk.Window):
         json_username = self.server_login(uid)
         username = json.loads(json_username)["name"]
         if username == 'ERROR':
-            self.error_uid()
+            #self.error_uid()
             self.remove(self.pantalla1)
             self.create_pantalla1()
+            thread_uid = threading.Thread(target=self.read_uid)  
+            thread_uid.daemon = True
+            thread_uid_in_use = False
+            thread_uid.start()
+            
         else:
             
             self.remove(self.pantalla1)
             self.create_pantalla2(username,uid)
-            print("flag4")
             self.restart_timer()
             t.start()
             self.show_all()
+            
 
     #Comunicació amb el servidor per fer login
     def server_login(self, uid):
@@ -203,6 +154,7 @@ class Window(Gtk.Window):
         )
         dialog.run()
         dialog.destroy()
+        
 
 
 #Interfície de la pantalla del course manager:
@@ -252,6 +204,59 @@ class Window(Gtk.Window):
     def mostra_taula(self, taula):
         self.pantalla2.set_row_spacing(30)
         
+        query = list(taula.keys())[1]
+        
+        #caso para 4 columnas
+        if query == 'timetables':            
+            self.table = Gtk.ListStore(str, str, str, str)       #creamos un modelo de TreeView a partir de una liststore de 4 columnas de strings
+            
+            columnas = list(taula[query][0].keys())       #hacemos una lista de los titulos/cabeceras de cada columna
+            
+            for row in taula[query]:
+                self.table.append([row[columnas[0]],row[columnas[1]],row[columnas[2]],row[columnas[3]]])      #añadimos la información de cada fila
+                
+            self.treeview = Gtk.TreeView.new_with_model(self.table)       #creamos un TreeView a partir del modelo
+                        
+            for i, column_title in enumerate([columnas[0],columnas[1],columnas[2],columnas[3]]):    #loop para poner titulo y configurar el diseño de cada una de las columnas
+                renderer = Gtk.CellRendererText()       #creamos un renderer
+                renderer.set_fixed_size(220,40)       #definimos medidas de las celdas
+                renderer.set_property("xalign",0.5)     #centramos los titulos
+                renderer.set_property("background","#CED4DA")
+                column = Gtk.TreeViewColumn(column_title,renderer,text=i)      #creamos un TreeViewColumn con las características anteriores que se añadirá al TreeView
+                column.set_alignment(0.5)        #centramos los contenidos de las celdas
+                self.treeview.append_column(column)       #añadimos el TreeViewColumn al TreeView
+                 
+            self.scrollable_treelist = Gtk.ScrolledWindow()          #hacemos que la ventana sea scrolled en cas que la tabla sea muy grande
+            self.scrollable_treelist.set_vexpand(True)            #expandimos la tabla en la ventana
+            self.pantalla2.attach(self.scrollable_treelist,0,3,6,6)       #añadimos la tabla en el grid
+            self.scrollable_treelist.add(self.treeview)
+            win.show_all()
+            
+        elif query == 'tasks' or query == 'marks':        #caso para 3 columnas
+            self.table = Gtk.ListStore(str, str, str)       #creamos un modelo de TreeView a partir de una liststore de 3 columnas de strings
+            
+            columnas = list(taula[query][0].keys())      #hacemos una lista de los titulos/cabeceras de cada columna
+            
+            for row in taula[query]:         
+                self.table.append([row[columnas[0]],row[columnas[1]],row[columnas[2]]])     #añadimos la información de cada fila
+            
+            self.treeview = Gtk.TreeView.new_with_model(self.table)            #creamos un TreeView a partir del modelo
+            
+            for i, column_title in enumerate([columnas[0],columnas[1],columnas[2]]):     #loop para poner titulo y configurar el diseño de cada una de las columnas
+                renderer = Gtk.CellRendererText()         #creamos un renderer
+                renderer.set_fixed_size(310,40)             #definimos medidas de las celdas
+                renderer.set_property("xalign",0.5)       #centramos los titulos
+                renderer.set_property("background","#CED4DA")
+                column = Gtk.TreeViewColumn(column_title,renderer,text=i)         #creamos un TreeViewColumn con las características anteriores que se añadirá al TreeView
+                column.set_alignment(0.5)           #centramos los contenidos de las celdas
+                self.treeview.append_column(column)         #añadimos el TreeViewColumn al TreeView
+                 
+            self.scrollable_treelist = Gtk.ScrolledWindow()      #hacemos que la ventana sea scrolled en cas que la tabla sea muy grande
+            self.scrollable_treelist.set_vexpand(True)           #expandimos la tabla en la ventana
+            self.pantalla2.attach(self.scrollable_treelist,0,3,6,6)       #añadimos la tabla en el grid
+            self.scrollable_treelist.add(self.treeview)
+            win.show_all()
+        
     
     #Tanca sessió i torna a la pantalla de login
     def log_out(self):
@@ -291,4 +296,3 @@ if __name__ == "__main__":
   win.show_all()
   Gtk.main()
             
-

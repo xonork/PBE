@@ -1,0 +1,25 @@
+ 
+box {
+margin: 0px;
+}
+
+button{
+background-color: #E0D4D4;
+box-shadow:#00000 5px 5px 1px;
+margin: 20px 10px 10px 10px;
+}
+
+#label{
+background-color: #3393FF;
+font: bold 24px Verdana;
+border-radius:20px;
+color:#FFFFFF;
+padding: 50px;
+margin: 20px;
+}
+    
+row{
+background-color: #E0D4D4;
+box-shadow:#00000 5px 5px 1px;
+margin: 20px 10px 10px 10px;
+}
